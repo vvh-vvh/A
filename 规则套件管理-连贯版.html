@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>规则套件管理 - 连贯版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #333; }
+
+        /* 顶部导航 */
+        .header { background: linear-gradient(90deg, #1890ff 0%, #096dd9 100%); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header-left { display: flex; align-items: center; gap: 8px; }
+        .logo { width: 32px; height: 32px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .header-title { color: #fff; font-size: 16px; font-weight: 500; }
+        .header-nav { display: flex; gap: 32px; margin-left: 48px; }
+        .nav-item { color: rgba(255,255,255,0.85); font-size: 14px; cursor: pointer; padding: 8px 0; position: relative; }
+        .nav-item:hover, .nav-item.active { color: #fff; }
+        .nav-item.active::after { content: ''; position: absolute; bottom: -12px; left: 0; right: 0; height: 2px; background: #fff; }
+        .header-right { display: flex; align-items: center; gap: 16px; color: #fff; }
+
+        /* 主体布局 */
+        .main-container { display: flex; min-height: calc(100vh - 56px); }
+        .sidebar { width: 208px; background: #001529; color: #fff; padding: 16px 0; }
+        .menu-item { padding: 12px 24px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.65); transition: all 0.3s; }
+        .menu-item:hover, .menu-item.active { background: #1890ff; color: #fff; }
+        .menu-icon { font-size: 16px; width: 20px; text-align: center; }
+
+        .content { flex: 1; padding: 20px; overflow: auto; }
+        .breadcrumb { margin-bottom: 16px; font-size: 13px; color: #666; }
+        .breadcrumb a { color: #1890ff; text-decoration: none; cursor: pointer; }
+        .breadcrumb span { margin: 0 8px; color: #ccc; }
+
+        /* 按钮 */
+        .btn { height: 32px; padding: 0 16px; border-radius: 4px; font-size: 13px; cursor: pointer; border: 1px solid transparent; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: #1890ff; color: #fff; }
+        .btn-primary:hover { background: #40a9ff; }
+        .btn-default { background: #fff; color: #666; border-color: #d9d9d9; }
+        .btn-default:hover { border-color: #1890ff; color: #1890ff; }
+        .btn-success { background: #52c41a; color: #fff; }
+        .btn-warning { background: #faad14; color: #fff; }
+        .btn-danger { background: #ff4d4f; color: #fff; }
+        .btn-sm { height: 28px; padding: 0 12px; font-size: 12px; }
+
+        /* 搜索栏 */
+        .search-bar { background: #fff; padding: 16px 20px; border-radius: 4px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .search-input { width: 280px; height: 32px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 12px; font-size: 13px; }
+        .search-input:focus { outline: none; border-color: #1890ff; }
+
+        /* 表格 */
+        .table-container { background: #fff; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { background: #fafafa; padding: 12px 16px; text-align: left; font-weight: 500; font-size: 13px; color: #666; border-bottom: 1px solid #f0f0f0; }
+        .data-table td { padding: 14px 16px; font-size: 13px; color: #333; border-bottom: 1px solid #f0f0f0; }
+        .data-table tr:hover { background: #fafafa; }
+
+        /* 状态标签 */
+        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .status-published { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .status-unpublished { background: #f5f5f5; color: #999; border: 1px solid #d9d9d9; }
+
+        /* 分页 */
+        .pagination { display: flex; justify-content: flex-end; align-items: center; padding: 16px 20px; gap: 8px; }
+        .page-info { font-size: 13px; color: #666; margin-right: 16px; }
+        .page-btn { min-width: 32px; height: 32px; padding: 0 8px; border: 1px solid #d9d9d9; background: #fff; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .page-btn:hover:not(:disabled) { border-color: #1890ff; color: #1890ff; }
+        .page-btn.active { background: #1890ff; color: #fff; border-color: #1890ff; }
+        .page-btn:disabled { cursor: not-allowed; color: #d9d9d9; }
+
+        /* 可点击数字 */
+        .clickable-number { color: #1890ff; cursor: pointer; font-weight: 500; text-decoration: underline; text-decoration-style: dotted; }
+        .clickable-number:hover { color: #40a9ff; }
+
+        /* 浮窗 */
+        .popover-trigger { position: relative; }
+        .popover { position: absolute; top: 100%; left: 0; margin-top: 8px; background: #fff; border: 1px solid #e8e8e8; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; min-width: 280px; display: none; }
+        .popover-trigger:hover .popover { display: block; }
+        .popover-header { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-weight: 500; font-size: 13px; color: #333; }
+        .popover-content { padding: 12px 16px; max-height: 200px; overflow-y: auto; }
+        .popover-item { padding: 6px 0; font-size: 12px; color: #666; border-bottom: 1px dashed #f0f0f0; }
+        .popover-item:last-child { border-bottom: none; }
+        .popover-footer { padding: 8px 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #999; text-align: right; }
+
+        .version-empty { color: #999; font-style: italic; }
+
+        /* 步骤条 */
+        .steps { display: flex; background: #fff; padding: 24px 40px; border-radius: 4px; margin-bottom: 16px; }
+        .step { flex: 1; display: flex; align-items: center; position: relative; }
+        .step:not(:last-child)::after { content: ''; flex: 1; height: 1px; background: #e8e8e8; margin: 0 16px; }
+        .step.finish:not(:last-child)::after { background: #52c41a; }
+        .step-icon { width: 32px; height: 32px; border-radius: 50%; background: #f5f5f5; color: #999; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; margin-right: 12px; }
+        .step.active .step-icon { background: #1890ff; color: #fff; }
+        .step.finish .step-icon { background: #52c41a; color: #fff; }
+        .step-title { font-size: 14px; color: #666; font-weight: 500; }
+        .step.active .step-title { color: #1890ff; }
+
+        /* 表单 */
+        .form-container { background: #fff; padding: 24px; border-radius: 4px; }
+        .form-section { margin-bottom: 24px; }
+        .form-section-title { font-size: 14px; font-weight: 500; color: #333; margin-bottom: 16px; padding-left: 12px; border-left: 3px solid #1890ff; }
+        .form-row { display: flex; gap: 24px; margin-bottom: 16px; }
+        .form-item { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .form-item.half { flex: 0 0 calc(50% - 12px); }
+        .form-label { font-size: 13px; color: #333; font-weight: 500; }
+        .form-label .required { color: #ff4d4f; margin-right: 4px; }
+        .form-input, .form-select, .form-textarea { height: 32px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 12px; font-size: 13px; }
+        .form-textarea { height: auto; padding: 8px 12px; min-height: 80px; }
+
+        /* 模型选择器 */
+        .model-selector { border: 1px dashed #d9d9d9; border-radius: 4px; padding: 16px; min-height: 100px; }
+        .selected-models { display: flex; flex-wrap: wrap; gap: 8px; }
+        .model-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: #e6f7ff; color: #1890ff; border-radius: 4px; font-size: 13px; }
+        .model-tag .remove { cursor: pointer; }
+        .add-model-btn { padding: 4px 12px; border: 1px dashed #1890ff; color: #1890ff; border-radius: 4px; font-size: 13px; cursor: pointer; background: transparent; }
+
+        /* 三栏布局 */
+        .config-layout { display: flex; background: #fff; border-radius: 4px; overflow: hidden; min-height: 600px; }
+
+        /* 左侧模型 */
+        .model-nav { width: 200px; border-right: 1px solid #f0f0f0; padding: 16px; }
+        .nav-title { font-size: 13px; font-weight: 500; color: #333; margin-bottom: 12px; }
+        .model-list-simple { display: flex; flex-direction: column; gap: 8px; }
+        .model-card { padding: 12px; border: 1px solid #e8e8e8; border-radius: 4px; cursor: pointer; transition: all 0.3s; }
+        .model-card:hover { border-color: #1890ff; background: #e6f7ff; }
+        .model-card.active { border-color: #1890ff; background: #e6f7ff; }
+        .model-card-name { font-size: 13px; font-weight: 500; color: #333; margin-bottom: 4px; }
+        .model-card-stats { font-size: 11px; color: #666; }
+
+        /* 中间字段 */
+        .field-panel { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #f0f0f0; }
+        .field-toolbar { padding: 16px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 12px; align-items: center; }
+        .field-search { flex: 1; height: 32px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 12px; font-size: 13px; }
+        .type-filter { height: 32px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 8px; font-size: 13px; }
+
+        .field-table-container { flex: 1; overflow: auto; }
+        .field-table { width: 100%; border-collapse: collapse; }
+        .field-table th { background: #fafafa; padding: 12px; text-align: left; font-size: 12px; color: #666; font-weight: 500; border-bottom: 1px solid #f0f0f0; }
+        .field-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+        .field-table tr:hover { background: #fafafa; }
+        .field-table tr.selected { background: #e6f7ff; }
+
+        .field-checkbox { width: 16px; height: 16px; }
+        .field-name { color: #333; font-weight: 500; }
+        .field-type { color: #666; font-size: 12px; }
+
+        .field-rules-cell { display: flex; align-items: center; gap: 6px; }
+        .rule-combo { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #e6f7ff; color: #1890ff; border-radius: 4px; font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rule-count { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: #1890ff; color: #fff; border-radius: 50%; font-size: 11px; cursor: help; }
+
+        .field-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+        .status-configured { background: #f6ffed; color: #52c41a; }
+        .status-pending { background: #f5f5f5; color: #999; }
+
+        .field-pagination { padding: 12px 16px; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .batch-actions { display: flex; gap: 8px; }
+
+        /* 右侧配置 */
+        .rule-sidebar { width: 320px; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 16px; border-bottom: 1px solid #f0f0f0; }
+        .sidebar-title { font-size: 14px; font-weight: 500; color: #333; margin-bottom: 8px; }
+        .selected-info { font-size: 12px; color: #666; }
+        .selected-info span { color: #1890ff; font-weight: 500; }
+
+        .sidebar-content { flex: 1; overflow-y: auto; padding: 16px; }
+
+        .cascade-section { margin-bottom: 16px; }
+        .cascade-label { font-size: 12px; color: #666; margin-bottom: 6px; }
+        .cascade-select { width: 100%; height: 36px; border: 1px solid #d9d9d9; border-radius: 4px; padding: 0 12px; font-size: 13px; margin-bottom: 8px; }
+        .cascade-select:focus { outline: none; border-color: #1890ff; }
+
+        .current-rules { margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+        .current-rules-title { font-size: 13px; font-weight: 500; color: #333; margin-bottom: 12px; }
+        .current-rules-title span { color: #1890ff; font-weight: 600; }
+        .current-rule-item { padding: 10px; background: #fafafa; border-radius: 4px; margin-bottom: 8px; }
+        .current-rule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .current-rule-name { font-size: 13px; font-weight: 500; color: #333; }
+        .current-rule-delete { font-size: 12px; color: #ff4d4f; cursor: pointer; }
+        .current-rule-chain { font-size: 11px; color: #666; }
+        .current-rule-chain span { color: #1890ff; }
+
+        .sidebar-footer { padding: 16px; border-top: 1px solid #f0f0f0; }
+
+        /* 结果确认 */
+        .result-summary { background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 4px; padding: 16px 20px; margin-bottom: 16px; }
+        .summary-title { font-size: 14px; font-weight: 500; color: #52c41a; margin-bottom: 8px; }
+        .summary-stats { display: flex; gap: 32px; }
+        .stat-item { display: flex; align-items: baseline; gap: 8px; }
+        .stat-value { font-size: 24px; font-weight: 600; color: #52c41a; }
+        .stat-label { font-size: 13px; color: #666; }
+
+        .result-collapse { background: #fff; border-radius: 4px; }
+        .collapse-item { border-bottom: 1px solid #f0f0f0; }
+        .collapse-header { padding: 16px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; background: #fafafa; }
+        .collapse-header:hover { background: #f0f0f0; }
+        .collapse-icon { transition: transform 0.3s; }
+        .collapse-item.expanded .collapse-icon { transform: rotate(90deg); }
+        .collapse-title { flex: 1; font-size: 14px; font-weight: 500; color: #333; }
+        .collapse-stats { font-size: 12px; color: #666; }
+        .collapse-content { display: none; padding: 0 20px 20px; }
+        .collapse-item.expanded .collapse-content { display: block; }
+
+        .result-table-list { margin-left: 20px; }
+        .result-table-item { padding: 12px 0; border-bottom: 1px dashed #f0f0f0; }
+        .result-table-name { font-size: 13px; color: #666; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .result-table-name::before { content: ''; width: 4px; height: 4px; background: #1890ff; border-radius: 50%; }
+        .result-fields { display: flex; flex-direction: column; gap: 6px; margin-left: 10px; }
+        .result-field { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+        .result-field-name { width: 120px; color: #333; }
+        .result-field-rules { flex: 1; display: flex; gap: 6px; flex-wrap: wrap; }
+        .result-rule-tag { padding: 2px 8px; background: #e6f7ff; color: #1890ff; border-radius: 4px; font-size: 11px; }
+
+        /* 详情页 */
+        .detail-header { background: #fff; padding: 24px; border-radius: 4px; margin-bottom: 16px; }
+        .detail-title { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .title-left { display: flex; align-items: center; gap: 12px; }
+        .detail-name { font-size: 20px; font-weight: 500; color: #333; }
+        .detail-version { padding: 2px 8px; background: #f0f0f0; color: #666; border-radius: 4px; font-size: 12px; }
+        .detail-meta { display: flex; gap: 32px; font-size: 13px; color: #666; flex-wrap: wrap; }
+        .detail-section { background: #fff; border-radius: 4px; margin-bottom: 16px; }
+        .section-header { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .section-title { font-size: 14px; font-weight: 500; color: #333; padding-left: 12px; border-left: 3px solid #1890ff; }
+        .section-content { padding: 20px; }
+        .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 32px; }
+        .info-item { display: flex; flex-direction: column; gap: 4px; }
+        .info-label { font-size: 12px; color: #999; }
+        .info-value { font-size: 13px; color: #333; }
+
+        /* 底部操作 */
+        .footer-actions { position: fixed; bottom: 0; left: 208px; right: 0; background: #fff; padding: 16px 24px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 12px; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); }
+
+        /* 页面隐藏 */
+        .page { display: none; }
+        .page.active { display: block; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div style="display: flex; align-items: center;">
+            <div class="header-left">
+                <div class="logo">🏥</div>
+                <div class="header-title">面向医疗健康领域的知识中台</div>
+            </div>
+            <nav class="header-nav">
+                <div class="nav-item">首页</div>
+                <div class="nav-item">知识</div>
+                <div class="nav-item active">管理</div>
+                <div class="nav-item">知识图谱</div>
+            </nav>
+        </div>
+        <div class="header-right">
+            <span>🔔</span>
+            <span>演示用账户 ▼</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="menu-item"><span class="menu-icon">📊</span><span>数据概览</span></div>
+            <div class="menu-item active"><span class="menu-icon">📦</span><span>规则套件</span></div>
+            <div class="menu-item"><span class="menu-icon">📐</span><span>规则管理</span></div>
+            <div class="menu-item"><span class="menu-icon">🗂️</span><span>模型管理</span></div>
+            <div class="menu-item"><span class="menu-icon">⚙️</span><span>系统设置</span></div>
+        </aside>
+
+        <main class="content">
+            <!-- ========== 页面1：规则套件列表页（第1页） ========== -->
+            <div id="page-list" class="page active">
+                <div class="breadcrumb">
+                    <a>管理</a> <span>/</span> <a>规则套件</a>
+                </div>
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="请输入规则套件名称">
+                    <button class="btn btn-default">🔍 筛选</button>
+                    <button class="btn btn-default">重置</button>
+                    <div style="flex: 1;"></div>
+                    <button class="btn btn-primary" onclick="showPage('page-create-step1')">+ 新建规则套件</button>
+                    <button class="btn btn-default">📥 批量导入</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><input type="checkbox"></th>
+                                <th>平台标识符</th>
+                                <th>规则套件名称</th>
+                                <th>应用场景</th>
+                                <th>模型数量</th>
+                                <th>规则数量</th>
+                                <th>版本号</th>
+                                <th>状态</th>
+                                <th>更新时间</th>
+                                <th>操作人</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS82345678</td>
+                                <td>患者信息脱敏套件</td>
+                                <td>医疗卫生</td>
+                                <td>
+                                    <div class="popover-trigger">
+                                        <span class="clickable-number">3</span>
+                                        <div class="popover">
+                                            <div class="popover-header">模型清单</div>
+                                            <div class="popover-content">
+                                                <div class="popover-item">📁 患者信息模型</div>
+                                                <div class="popover-item">📁 医嘱模型</div>
+                                                <div class="popover-item">📁 检验检查模型</div>
+                                            </div>
+                                            <div class="popover-footer">共 3 个模型</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="clickable-number">156</span></td>
+                                <td>V2.1</td>
+                                <td><span class="status-tag status-published">已发布</span></td>
+                                <td>2026-04-23 14:30:00</td>
+                                <td>李欣</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-default">修订历史</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS91456789</td>
+                                <td>医保结算清单质控套件</td>
+                                <td>医保结算</td>
+                                <td><span class="clickable-number">5</span></td>
+                                <td><span class="clickable-number">89</span></td>
+                                <td>V1.3</td>
+                                <td><span class="status-tag status-published">已发布</span></td>
+                                <td>2026-04-22 16:45:00</td>
+                                <td>张敏</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-default">修订历史</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS73456789</td>
+                                <td>诊断编码规范套件</td>
+                                <td>临床质控</td>
+                                <td><span class="clickable-number">2</span></td>
+                                <td><span class="clickable-number">45</span></td>
+                                <td>V1.0</td>
+                                <td><span class="status-tag status-unpublished">未发布</span></td>
+                                <td>2026-04-21 09:20:00</td>
+                                <td>王芳</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-primary">编辑</button>
+                                    <button class="btn btn-sm btn-danger">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS84567890</td>
+                                <td>敏感数据识别套件</td>
+                                <td>数据安全</td>
+                                <td><span class="clickable-number">4</span></td>
+                                <td><span class="clickable-number">128</span></td>
+                                <td>V3.2</td>
+                                <td><span class="status-tag status-published">已发布</span></td>
+                                <td>2026-04-20 11:30:00</td>
+                                <td>刘洋</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-default">修订历史</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS95678901</td>
+                                <td>药品库存管理套件</td>
+                                <td>医疗卫生</td>
+                                <td><span class="clickable-number">3</span></td>
+                                <td><span class="clickable-number">67</span></td>
+                                <td>V1.1</td>
+                                <td><span class="status-tag status-unpublished">未发布</span></td>
+                                <td>2026-04-19 15:00:00</td>
+                                <td>陈明</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-primary">编辑</button>
+                                    <button class="btn btn-sm btn-danger">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS66789012</td>
+                                <td>医疗器械追溯套件</td>
+                                <td>临床质控</td>
+                                <td><span class="clickable-number">2</span></td>
+                                <td><span class="clickable-number">34</span></td>
+                                <td>V2.0</td>
+                                <td><span class="status-tag status-published">已发布</span></td>
+                                <td>2026-04-18 10:45:00</td>
+                                <td>赵静</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-default">修订历史</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS77890123</td>
+                                <td>电子病历质控套件</td>
+                                <td>临床质控</td>
+                                <td><span class="clickable-number">6</span></td>
+                                <td><span class="clickable-number">198</span></td>
+                                <td>V1.5</td>
+                                <td><span class="status-tag status-published">已发布</span></td>
+                                <td>2026-04-17 14:20:00</td>
+                                <td>孙伟</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-default">修订历史</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS88901234</td>
+                                <td>检验检查结果互认套件</td>
+                                <td>医疗卫生</td>
+                                <td><span class="clickable-number">4</span></td>
+                                <td><span class="clickable-number">76</span></td>
+                                <td>V1.0</td>
+                                <td><span class="status-tag status-unpublished">未发布</span></td>
+                                <td>2026-04-16 16:00:00</td>
+                                <td>周丽</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-primary">编辑</button>
+                                    <button class="btn btn-sm btn-danger">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS99012345</td>
+                                <td>处方审核规则套件</td>
+                                <td>医保结算</td>
+                                <td><span class="clickable-number">3</span></td>
+                                <td><span class="clickable-number">112</span></td>
+                                <td>V2.3</td>
+                                <td><span class="status-tag status-published">已发布</span></td>
+                                <td>2026-04-15 09:30:00</td>
+                                <td>吴刚</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-default">修订历史</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS10123456</td>
+                                <td>医疗费用监控套件</td>
+                                <td>医保结算</td>
+                                <td><span class="clickable-number">5</span></td>
+                                <td><span class="clickable-number">145</span></td>
+                                <td>V1.2</td>
+                                <td><span class="status-tag status-published">已发布</span></td>
+                                <td>2026-04-14 13:45:00</td>
+                                <td>郑华</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-default">修订历史</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <span class="page-info">共 15 条</span>
+                        <button class="page-btn" disabled>«</button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn" onclick="goToPage(2)">2</button>
+                        <button class="page-btn" onclick="goToPage(2)">»</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 页面1-2：规则套件列表页（第2页） ========== -->
+            <div id="page-list-2" class="page">
+                <div class="breadcrumb">
+                    <a>管理</a> <span>/</span> <a>规则套件</a>
+                </div>
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="请输入规则套件名称">
+                    <button class="btn btn-default">🔍 筛选</button>
+                    <button class="btn btn-default">重置</button>
+                    <div style="flex: 1;"></div>
+                    <button class="btn btn-primary" onclick="showPage('page-create-step1')">+ 新建规则套件</button>
+                    <button class="btn btn-default">📥 批量导入</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><input type="checkbox"></th>
+                                <th>平台标识符</th>
+                                <th>规则套件名称</th>
+                                <th>应用场景</th>
+                                <th>模型数量</th>
+                                <th>规则数量</th>
+                                <th>版本号</th>
+                                <th>状态</th>
+                                <th>更新时间</th>
+                                <th>操作人</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS21234567</td>
+                                <td>传染病上报规则套件</td>
+                                <td>数据安全</td>
+                                <td><span class="clickable-number">2</span></td>
+                                <td><span class="clickable-number">28</span></td>
+                                <td><span class="version-empty">-</span></td>
+                                <td><span class="status-tag status-unpublished">未发布</span></td>
+                                <td>2026-04-13 11:20:00</td>
+                                <td>钱红</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-primary">编辑</button>
+                                    <button class="btn btn-sm btn-danger">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS32345678</td>
+                                <td>手术安全核查套件</td>
+                                <td>临床质控</td>
+                                <td><span class="clickable-number">3</span></td>
+                                <td><span class="clickable-number">56</span></td>
+                                <td>V1.4</td>
+                                <td><span class="status-tag status-published">已发布</span></td>
+                                <td>2026-04-12 15:30:00</td>
+                                <td>李明</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-default">修订历史</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS43456789</td>
+                                <td>输血安全管理套件</td>
+                                <td>临床质控</td>
+                                <td><span class="clickable-number">2</span></td>
+                                <td><span class="clickable-number">42</span></td>
+                                <td>V1.1</td>
+                                <td><span class="status-tag status-published">已发布</span></td>
+                                <td>2026-04-11 10:00:00</td>
+                                <td>王强</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-default">修订历史</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS54567890</td>
+                                <td>病案首页质控套件</td>
+                                <td>医保结算</td>
+                                <td><span class="clickable-number">4</span></td>
+                                <td><span class="clickable-number">134</span></td>
+                                <td>V2.0</td>
+                                <td><span class="status-tag status-unpublished">未发布</span></td>
+                                <td>2026-04-10 14:15:00</td>
+                                <td>张磊</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-primary">编辑</button>
+                                    <button class="btn btn-sm btn-danger">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>KFS65678901</td>
+                                <td>抗菌药物管理套件</td>
+                                <td>医疗卫生</td>
+                                <td><span class="clickable-number">3</span></td>
+                                <td><span class="clickable-number">78</span></td>
+                                <td><span class="version-empty">-</span></td>
+                                <td><span class="status-tag status-unpublished">未发布</span></td>
+                                <td>2026-04-09 16:45:00</td>
+                                <td>刘芳</td>
+                                <td>
+                                    <button class="btn btn-sm btn-default" onclick="showPage('page-detail')">查看</button>
+                                    <button class="btn btn-sm btn-primary">编辑</button>
+                                    <button class="btn btn-sm btn-danger">删除</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <span class="page-info">共 15 条</span>
+                        <button class="page-btn" onclick="goToPage(1)">«</button>
+                        <button class="page-btn" onclick="goToPage(1)">1</button>
+                        <button class="page-btn active">2</button>
+                        <button class="page-btn" disabled>»</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 页面2：创建向导-步骤1 ========== -->
+            <div id="page-create-step1" class="page">
+                <div class="breadcrumb">
+                    <a onclick="goToPage(1)">管理</a> <span>/</span>
+                    <a onclick="goToPage(1)">规则套件</a> <span>/</span>
+                    <span>新建规则套件</span>
+                </div>
+                <div class="steps">
+                    <div class="step active">
+                        <div class="step-icon">1</div>
+                        <div class="step-title">基本信息</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-icon">2</div>
+                        <div class="step-title">规则配置</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-icon">3</div>
+                        <div class="step-title">结果确认</div>
+                    </div>
+                </div>
+                <div class="form-container">
+                    <div class="form-section">
+                        <div class="form-section-title">基本信息</div>
+                        <div class="form-row">
+                            <div class="form-item half">
+                                <label class="form-label"><span class="required">*</span>规则套件名称</label>
+                                <input type="text" class="form-input" placeholder="请输入规则套件名称">
+                            </div>
+                            <div class="form-item half">
+                                <label class="form-label"><span class="required">*</span>所属应用场景</label>
+                                <select class="form-select">
+                                    <option>请选择应用场景</option>
+                                    <option>医疗卫生</option>
+                                    <option>医保结算</option>
+                                    <option>临床质控</option>
+                                    <option>数据安全</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-item">
+                                <label class="form-label">规则套件描述</label>
+                                <textarea class="form-textarea" placeholder="请输入规则套件的业务描述、适用范围等"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">关联模型（可多选）</div>
+                        <div class="form-item">
+                            <label class="form-label"><span class="required">*</span>选择数据模型</label>
+                            <div class="model-selector">
+                                <div class="selected-models">
+                                    <div class="model-tag"><span>患者信息模型</span><span class="remove">✕</span></div>
+                                    <div class="model-tag"><span>医嘱模型</span><span class="remove">✕</span></div>
+                                    <div class="model-tag"><span>检验检查模型</span><span class="remove">✕</span></div>
+                                    <button class="add-model-btn">+ 添加模型</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-actions">
+                    <button class="btn btn-default" onclick="goToPage(1)">取消</button>
+                    <button class="btn btn-primary" onclick="showPage('page-create-step2')">下一步</button>
+                </div>
+            </div>
+
+            <!-- ========== 页面3：创建向导-步骤2 ========== -->
+            <div id="page-create-step2" class="page">
+                <div class="breadcrumb">
+                    <a onclick="goToPage(1)">管理</a> <span>/</span>
+                    <a onclick="goToPage(1)">规则套件</a> <span>/</span>
+                    <span>新建规则套件</span>
+                </div>
+                <div class="steps">
+                    <div class="step finish"><div class="step-icon">✓</div><div class="step-title">基本信息</div></div>
+                    <div class="step active"><div class="step-icon">2</div><div class="step-title">规则配置</div></div>
+                    <div class="step"><div class="step-icon">3</div><div class="step-title">结果确认</div></div>
+                </div>
+
+                <div class="config-layout">
+                    <!-- 左侧：3个模型 -->
+                    <div class="model-nav">
+                        <div class="nav-title">已选择 3 个模型</div>
+                        <div class="model-list-simple">
+                            <div class="model-card active">
+                                <div class="model-card-name">患者信息模型</div>
+                                <div class="model-card-stats">2张表 / 50个字段</div>
+                            </div>
+                            <div class="model-card">
+                                <div class="model-card-name">医嘱模型</div>
+                                <div class="model-card-stats">2张表 / 20个字段</div>
+                            </div>
+                            <div class="model-card">
+                                <div class="model-card-name">检验检查模型</div>
+                                <div class="model-card-stats">3张表 / 35个字段</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 中间：字段列表 -->
+                    <div class="field-panel">
+                        <div class="field-toolbar">
+                            <input type="text" class="field-search" placeholder="搜索字段名称">
+                            <select class="type-filter"><option>全部类型</option><option>字符串</option><option>数值</option><option>日期</option></select>
+                            <select class="type-filter"><option>全部状态</option><option>已配置</option><option>未配置</option></select>
+                            <div style="flex: 1;"></div>
+                            <button class="btn btn-sm btn-primary">+ 批量配置</button>
+                        </div>
+                        <div class="field-table-container">
+                            <table class="field-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px;"><input type="checkbox"></th>
+                                        <th>字段名称</th>
+                                        <th>数据类型</th>
+                                        <th>已配置规则</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="selected">
+                                        <td><input type="checkbox" class="field-checkbox" checked></td>
+                                        <td><div class="field-name">PATIENT_NAME</div><div class="field-type">患者姓名</div></td>
+                                        <td><span class="field-type">VARCHAR(50)</span></td>
+                                        <td><div class="field-rules-cell"><span class="rule-combo">KR001-脱敏规则</span></div></td>
+                                        <td><span class="field-status status-configured">已配置</span></td>
+                                        <td><button class="btn btn-sm btn-default">配置</button></td>
+                                    </tr>
+                                    <tr class="selected">
+                                        <td><input type="checkbox" class="field-checkbox" checked></td>
+                                        <td><div class="field-name">ID_CARD_NO</div><div class="field-type">身份证号</div></td>
+                                        <td><span class="field-type">VARCHAR(18)</span></td>
+                                        <td><div class="field-rules-cell"><span class="rule-combo">KR002-敏感识别</span><span class="rule-count" title="KR002-敏感识别&#10;KR003-加密规则">2</span></div></td>
+                                        <td><span class="field-status status-configured">已配置</span></td>
+                                        <td><button class="btn btn-sm btn-default">配置</button></td>
+                                    </tr>
+                                    <tr class="selected">
+                                        <td><input type="checkbox" class="field-checkbox" checked></td>
+                                        <td><div class="field-name">PHONE_NO</div><div class="field-type">手机号码</div></td>
+                                        <td><span class="field-type">VARCHAR(20)</span></td>
+                                        <td><div class="field-rules-cell"><span class="rule-combo">KR001-脱敏规则</span></div></td>
+                                        <td><span class="field-status status-configured">已配置</span></td>
+                                        <td><button class="btn btn-sm btn-default">配置</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" class="field-checkbox"></td>
+                                        <td><div class="field-name">GENDER</div><div class="field-type">性别</div></td>
+                                        <td><span class="field-type">VARCHAR(2)</span></td>
+                                        <td>-</td>
+                                        <td><span class="field-status status-pending">未配置</span></td>
+                                        <td><button class="btn btn-sm btn-primary">配置</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" class="field-checkbox"></td>
+                                        <td><div class="field-name">BIRTH_DATE</div><div class="field-type">出生日期</div></td>
+                                        <td><span class="field-type">DATE</span></td>
+                                        <td>-</td>
+                                        <td><span class="field-status status-pending">未配置</span></td>
+                                        <td><button class="btn btn-sm btn-primary">配置</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="field-pagination">
+                            <div class="batch-actions">
+                                <span style="font-size: 13px; color: #666;">已选择 <strong style="color: #1890ff;">3</strong> 个字段</span>
+                                <button class="btn btn-sm btn-primary">批量应用规则</button>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 13px; color: #666;">共 32 条</span>
+                                <button class="page-btn">«</button>
+                                <button class="page-btn active">1</button>
+                                <button class="page-btn">2</button>
+                                <button class="page-btn">»</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：规则配置 -->
+                    <div class="rule-sidebar">
+                        <div class="sidebar-header">
+                            <div class="sidebar-title">规则配置</div>
+                            <div class="selected-info">当前选中：<span>3个字段</span></div>
+                        </div>
+                        <div class="sidebar-content">
+                            <div class="cascade-section">
+                                <div class="cascade-label">选择规则</div>
+                                <select class="cascade-select"><option>请选择规则</option><option>KR001-脱敏规则</option><option>KR002-敏感识别规则</option><option>KR003-加密规则</option></select>
+                                <select class="cascade-select"><option>请选择规则版本</option><option>V2.1（最新）</option><option>V2.0</option><option>V1.0</option></select>
+                            </div>
+                            <div class="cascade-section">
+                                <div class="cascade-label">选择实现方法</div>
+                                <select class="cascade-select"><option>请选择方法</option><option>MF001-掩码算法</option><option>MF002-正则识别</option><option>MF003-SM4加密</option></select>
+                                <select class="cascade-select"><option>请选择方法版本</option><option>V1.0（最新）</option></select>
+                            </div>
+
+                            <div class="current-rules">
+                                <div class="current-rules-title">选中字段已配置规则（共<span>3</span>条）</div>
+                                <div class="current-rule-item">
+                                    <div class="current-rule-header">
+                                        <span class="current-rule-name">PATIENT_NAME - 脱敏规则</span>
+                                        <span class="current-rule-delete">删除</span>
+                                    </div>
+                                    <div class="current-rule-chain">规则版本：<span>V1.0</span> → 方法：<span>掩码算法</span> → 方法版本：<span>V1.0</span></div>
+                                </div>
+                                <div class="current-rule-item">
+                                    <div class="current-rule-header">
+                                        <span class="current-rule-name">ID_CARD_NO - 敏感识别</span>
+                                        <span class="current-rule-delete">删除</span>
+                                    </div>
+                                    <div class="current-rule-chain">规则版本：<span>V2.1</span> → 方法：<span>正则识别</span> → 方法版本：<span>V1.0</span></div>
+                                </div>
+                                <div class="current-rule-item">
+                                    <div class="current-rule-header">
+                                        <span class="current-rule-name">PHONE_NO - 脱敏规则</span>
+                                        <span class="current-rule-delete">删除</span>
+                                    </div>
+                                    <div class="current-rule-chain">规则版本：<span>V1.0</span> → 方法：<span>掩码算法</span> → 方法版本：<span>V1.0</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sidebar-footer">
+                            <button class="btn btn-primary" style="width: 100%;">应用到选中字段</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-actions">
+                    <button class="btn btn-default" onclick="showPage('page-create-step1')">上一步</button>
+                    <button class="btn btn-primary" onclick="showPage('page-create-step3')">下一步</button>
+                </div>
+            </div>
+
+            <!-- ========== 页面4：创建向导-步骤3 ========== -->
+            <div id="page-create-step3" class="page">
+                <div class="breadcrumb">
+                    <a onclick="goToPage(1)">管理</a> <span>/</span>
+                    <a onclick="goToPage(1)">规则套件</a> <span>/</span>
+                    <span>新建规则套件</span>
+                </div>
+                <div class="steps">
+                    <div class="step finish"><div class="step-icon">✓</div><div class="step-title">基本信息</div></div>
+                    <div class="step finish"><div class="step-icon">✓</div><div class="step-title">规则配置</div></div>
+                    <div class="step active"><div class="step-icon">3</div><div class="step-title">结果确认</div></div>
+                </div>
+
+                <div class="result-summary">
+                    <div class="summary-title">✓ 规则套件配置完成</div>
+                    <div class="summary-stats">
+                        <div class="stat-item"><span class="stat-value">3</span><span class="stat-label">关联模型</span></div>
+                        <div class="stat-item"><span class="stat-value">7</span><span class="stat-label">数据表</span></div>
+                        <div class="stat-item"><span class="stat-value">156</span><span class="stat-label">配置规则</span></div>
+                    </div>
+                </div>
+
+                <div class="result-collapse">
+                    <div class="collapse-item expanded">
+                        <div class="collapse-header">
+                            <span class="collapse-icon">▶</span>
+                            <span>📁</span>
+                            <span class="collapse-title">患者信息模型</span>
+                            <span class="collapse-stats">2张表 / 89条规则配置</span>
+                        </div>
+                        <div class="collapse-content">
+                            <div class="result-table-list">
+                                <div class="result-table-item">
+                                    <div class="result-table-name">患者基本信息表（32个字段）</div>
+                                    <div class="result-fields">
+                                        <div class="result-field">
+                                            <span class="result-field-name">PATIENT_NAME</span>
+                                            <div class="result-field-rules"><span class="result-rule-tag">KR001-脱敏规则 V1.0 → 掩码算法 V1.0</span></div>
+                                        </div>
+                                        <div class="result-field">
+                                            <span class="result-field-name">ID_CARD_NO</span>
+                                            <div class="result-field-rules">
+                                                <span class="result-rule-tag">KR002-敏感识别 V2.1 → 正则识别 V1.0</span>
+                                                <span class="result-rule-tag">KR003-加密规则 V1.0 → SM4加密 V2.0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="collapse-item">
+                        <div class="collapse-header">
+                            <span class="collapse-icon">▶</span>
+                            <span>📁</span>
+                            <span class="collapse-title">医嘱模型</span>
+                            <span class="collapse-stats">2张表 / 45条规则配置</span>
+                        </div>
+                        <div class="collapse-content">
+                            <div class="result-table-list">
+                                <div class="result-table-item">
+                                    <div class="result-table-name">医嘱主表（12个字段）</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="collapse-item">
+                        <div class="collapse-header">
+                            <span class="collapse-icon">▶</span>
+                            <span>📁</span>
+                            <span class="collapse-title">检验检查模型</span>
+                            <span class="collapse-stats">3张表 / 22条规则配置</span>
+                        </div>
+                        <div class="collapse-content"></div>
+                    </div>
+                </div>
+
+                <div class="footer-actions">
+                    <button class="btn btn-default" onclick="showPage('page-create-step2')">上一步</button>
+                    <button class="btn btn-success" onclick="goToPage(1)">✓ 确认完成</button>
+                </div>
+            </div>
+
+            <!-- ========== 页面5：规则套件详情页 ========== -->
+            <div id="page-detail" class="page">
+                <div class="breadcrumb">
+                    <a onclick="goToPage(1)">管理</a> <span>/</span>
+                    <a onclick="goToPage(1)">规则套件</a> <span>/</span>
+                    <span>患者信息脱敏套件</span>
+                </div>
+
+                <div class="detail-header">
+                    <div class="detail-title">
+                        <div class="title-left">
+                            <span class="detail-name">患者信息脱敏套件</span>
+                            <span class="detail-version">V2.1</span>
+                            <span class="status-tag status-published">已发布</span>
+                        </div>
+                        <div class="detail-actions">
+                            <button class="btn btn-default">📥 导出</button>
+                            <button class="btn btn-default">📋 复制</button>
+                            <button class="btn btn-warning" style="color: #fff;">⬇️ 下架</button>
+                        </div>
+                    </div>
+                    <div class="detail-meta">
+                        <span>应用场景：医疗卫生</span>
+                        <span>包含模型：3个</span>
+                        <span>涉及数据表：8张</span>
+                        <span>配置规则：156条</span>
+                        <span>创建人：李欣</span>
+                        <span>创建时间：2026-04-20</span>
+                        <span>更新时间：2026-04-23 14:30:00</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="section-header">
+                        <span class="section-title">基本信息</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="info-grid">
+                            <div class="info-item"><span class="info-label">平台标识符</span><span class="info-value">KFS82345678</span></div>
+                            <div class="info-item"><span class="info-label">规则套件名称</span><span class="info-value">患者信息脱敏套件</span></div>
+                            <div class="info-item"><span class="info-label">所属应用场景</span><span class="info-value">医疗卫生</span></div>
+                            <div class="info-item"><span class="info-label">当前版本</span><span class="info-value">V2.1</span></div>
+                            <div class="info-item"><span class="info-label">状态</span><span class="info-value" style="color: #52c41a;">● 已发布</span></div>
+                            <div class="info-item"><span class="info-label">操作人</span><span class="info-value">李欣</span></div>
+                            <div class="info-item"><span class="info-label">涉及模型数</span><span class="info-value">3个</span></div>
+                            <div class="info-item"><span class="info-label">涉及数据表</span><span class="info-value">8张</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="section-header">
+                        <span class="section-title">模型与规则配置</span>
+                    </div>
+                    <div class="section-content" style="padding: 0;">
+                        <div class="result-collapse">
+                            <div class="collapse-item expanded">
+                                <div class="collapse-header">
+                                    <span class="collapse-icon">▶</span>
+                                    <span>📁</span>
+                                    <span class="collapse-title">患者信息模型</span>
+                                    <span class="collapse-stats">2张表 / 89条规则</span>
+                                </div>
+                                <div class="collapse-content">
+                                    <div class="result-table-list">
+                                        <div class="result-table-item">
+                                            <div class="result-table-name">患者基本信息表（32个字段，已配置15条规则）</div>
+                                        </div>
+                                        <div class="result-table-item">
+                                            <div class="result-table-name">就诊记录表（18个字段，已配置45条规则）</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 页面切换
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        // 分页切换
+        function goToPage(pageNum) {
+            if (pageNum === 1) {
+                showPage('page-list');
+            } else {
+                showPage('page-list-2');
+            }
+        }
+
+        // 折叠展开
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.collapse-header')) {
+                const item = e.target.closest('.collapse-item');
+                item.classList.toggle('expanded');
+            }
+        });
+    </script>
+</body>
+</html>
